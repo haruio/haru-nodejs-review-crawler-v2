@@ -1,0 +1,18 @@
+{
+  "numberOfReview": 10,
+  "totalUrl": "http://www.amazon.com/ss/customer-reviews/%s/",
+  "url": "http://www.amazon.com/ss/customer-reviews/%s/ref=cm_cr_pr_btm_link_%d?_encoding=UTF8&ref_=cm_cr_dp_see_all_btm&showViewpoints=1&sortBy=recent&reviewerType=all_reviews&filterByStar=all_stars&pageNumber=%d",
+  "successUrl": "http://172.16.101.71:8000/qna/webhook?appid=%s&messagetype=crawler",
+
+  "mainSelector": "div.a-section.review",
+  "selectors":
+  [
+    {
+      "selector": "a img.author-image",
+      "attr": "src",
+      "property": "authimage"
+    }
+  ]
+}
+
+
