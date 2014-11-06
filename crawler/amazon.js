@@ -53,22 +53,6 @@ function _insertQuery(applicationId, datas, callback) {
 }
 
 
-function _requestTotal( packageName, callback ) {
-    _request(util.format(config.url, packageName, 1, 1), function (error, res, html) {
-        var mainSelector = config.mainSelector;
-        var $ = parser.load(html);
-
-        var match = $(mainSelector);
-        if( match.length === 0 ) {
-            log.info('[%s:%d]: amazon fail', packageName, 1 );
-            return _requestTotal(packageName, callback);
-        }
-
-        var total = $('div.a-row.a-spacing-medium.customerReviews').find('span.a-size-medium')[1].children[0].data.replace(/,/g, '');
-        callback( error, parseInt(total) );
-    });
-};
-
 function _crawling(body, callback) {
     var reviews = [];
 

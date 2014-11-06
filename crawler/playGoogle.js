@@ -48,6 +48,16 @@ exports.calcPageCount = function(reviewCount) {
 };
 
 
+function _insertQuery(applicationId, datas, callback) {
+    var bulk = [];
+    for( var i = 0; i < datas.length; i++ ) {
+        bulk.push(_.values(datas[i]));
+    }
+
+    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market) VALUES ?', [bulk], callback);
+}
+
+
 function _crawling(body, callback) {
     _request(config.url, {id: body.packageName,
         reviewSortOrder: 0,
@@ -84,7 +94,7 @@ function _crawling(body, callback) {
                 body: title.parent.next.data,
                 applicationid: body.applicationId,
                 location: body.location,
-                market: 'amazon'
+                market: 'playGoogle'
             });
         }
 
@@ -106,12 +116,3 @@ function _request(url, body, callback){
 
     request(google_store_options, callback);
 };
-
-function _insertQuery(applicationId, datas, callback) {
-    var bulk = [];
-    for( var i = 0; i < datas.length; i++ ) {
-        bulk.push(_.values(datas[i]));
-    }
-
-    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market) VALUES ?', [bulk], callback);
-}
