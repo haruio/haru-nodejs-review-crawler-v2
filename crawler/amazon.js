@@ -10,18 +10,21 @@ var async = require('async');
 var moment = require('moment');
 var store = require('haru-nodejs-store');
 
-exports.crawling = function(applicationId, packageName, reviewCount, callback) {
-    var pageCount = parseInt( (reviewCount/config.numberOfReview) + 1);
+exports.crawling = function(option, callback) {
+    async.waterfall([
+        function crawling(callback) {
+            _crawling(option, function(error, results) {
+                callback(error, results);
+            });
+        },
+        function insertQuery(results, callback) {
+            _insertQuery(option.applicationId, results, function(error, results) {
+                callback(error, results);
+            });
+        }
+    ], function done(error, results) {
+        //request.get(util.format(config.successUrl, body.applicationId));
 
-    async.times(pageCount, function(n, next) {
-        var pageNumber = n+1;
-        _crawling(packageName, pageNumber, function(error, results) {
-            _insertQuery(applicationId, results);
-            next(error, results);
-        });
-    },function done(error, results) {
-        // TODO send complete message
-        request.get(util.format(config.successUrl,applicationId));
         if(callback){ return callback(error, results); }
     });
 };
@@ -29,24 +32,24 @@ exports.crawling = function(applicationId, packageName, reviewCount, callback) {
 exports.requestTotal = function(applicationId, packageName, callback) {
     _requestTotal(packageName, function(error, total) {
         // TODO 현재 100개 제한.
+        console.log(total);
 
-        console.log(error, total);
-
-        callback(error, 100);
+        callback(error, total);
     });
 };
 
+exports.calcPageCount = function(reviewCount) {
+    return parseInt( (reviewCount/config.numberOfReview) + 1);
+};
 
 
 function _insertQuery(applicationId, datas, callback) {
-    async.times(datas.length, function(n, next) {
-        var data = datas[n];
-        store.get('mysql').query('insert into Reviews (applicationid, commentid, imagesource, name, date, rating, title, body, market) values (?,?,?,?,?,?,?,?,?)',
-            [applicationId, data.id, data.image,data.name, data.date, data.rating, data.title, data.body, 'amazon'], next);
+    var bulk = [];
+    for( var i = 0; i < datas.length; i++ ) {
+        bulk.push(_.values(datas[i]));
+    }
 
-    },function done(error, results) {
-        if(callback) { callback(error, results); }
-    });
+    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market) VALUES ?', [bulk], callback);
 }
 
 
@@ -66,18 +69,18 @@ function _requestTotal( packageName, callback ) {
     });
 };
 
-function _crawling(packageName, pageNumber, callback) {
+function _crawling(body, callback) {
     var reviews = [];
 
-    _request(util.format(config.url, packageName, pageNumber, pageNumber), function (error, res, html) {
+    _request(util.format(config.url, body.packageName, body.page, body.page), function (error, res, html) {
         var mainSelector = config.mainSelector;
         var $ = parser.load(html);
 
         var match = $(mainSelector);
 
         if( match.length === 0 ) {
-            log.info('[%s:%d]: amazon fail', packageName, pageNumber );
-            return _crawling(packageName, pageNumber, callback);
+            log.info('[%s:%d]: amazon fail', body.packageName, body.page );
+            return _crawling(body, callback);
         }
 
         for( var i = 0; i < match.length; i++ ){
@@ -87,17 +90,21 @@ function _crawling(packageName, pageNumber, callback) {
             var rating_string =  match.find('div.a-row a.a-link-normal i')[i].attribs.class.split('a-icon-star')[1];
             var rating_number = Number(rating_string.match(/\d+/)[0]);
             var title = match.find('div.a-row a.a-link-normal.review-title.a-color-base.a-text-normal.a-text-bold')[i].children[0].data;
-            var body = match.find('div.a-row.a-spacing-top-mini.review-data div.a-section.review-text')[i].children[0].data;
+            var _body = match.find('div.a-row.a-spacing-top-mini.review-data div.a-section.review-text')[i].children[0].data;
 
             reviews.push( {
-                id: id,
-                image: '',
+                commentid: id,
+                imagesource: '',
                 name: name,
                 date: moment(date, 'YYYY년 MM월 DD일').valueOf(),
                 rating: rating_number,
                 title: title,
-                body: body
+                body: _body,
+                applicationid: body.applicationId,
+                location: body.location,
+                market: 'amazon'
             });
+
         }
 
         if(callback){ return callback(error, reviews); }

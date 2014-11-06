@@ -11,18 +11,21 @@ var store = require('haru-nodejs-store');
 var util = require('util');
 
 
-exports.crawling = function(applicationId, packageName, reviewCount, callback) {
-    var pageCount = parseInt( (reviewCount/config.numberOfReview) + 1);
+exports.crawling = function(option, callback) {
+    async.waterfall([
+        function crawling(callback) {
+            _crawling(option, function(error, results) {
+                callback(error, results);
+            });
+        },
+        function insertQuery(results, callback) {
+            _insertQuery(option.applicationId, results, function(error, results) {
+                callback(error, results);
+            });
+        }
+    ], function done(error, results) {
+        //request.get(util.format(config.successUrl, body.applicationId));
 
-    async.times(pageCount, function(n, next) {
-        var pageNumber = n+1;
-        _crawling(packageName, pageNumber, function(error, results) {
-            _insertQuery(applicationId, results);
-            next(error, results);
-        });
-    },function done(error, results) {
-        // TODO send complete message
-        request.get(util.format(config.successUrl,applicationId));
         if(callback){ return callback(error, results); }
     });
 };
@@ -34,26 +37,30 @@ exports.requestTotal = function(applicationId, packageName, callback) {
         var $ = parser.load(body);
 
         var total = $('meta[itemprop=ratingCount]').attr('content');
-        console.log(error, parseInt(total));
+        console.log(total);
 
-        callback(error, 100);
+        callback(error, total);
     });
 };
 
+exports.calcPageCount = function(reviewCount) {
+    return parseInt( (reviewCount/config.numberOfReview) + 1);
+};
 
-function _crawling(packageName, pageNumber, callback) {
-    _request(config.url, {id: packageName,
+
+function _crawling(body, callback) {
+    _request(config.url, {id: body.packageName,
         reviewSortOrder: 0,
         reviewType: 0,
-        pageNum: pageNumber,
-        xhr: 1}, function(error, res, body) {
+        pageNum: body.page,
+        xhr: 1}, function(error, res, html) {
 
-        body = body.replace('\" ', '').replace(' \"', '').replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u003d\\/g, '=').replace(/\\\"/g, '"');
+        html = html.replace('\" ', '').replace(' \"', '').replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u003d\\/g, '=').replace(/\\\"/g, '"');
 
         var mainSelector = config.mainSelector;
         var reviews = [];
 
-        var $ = parser.load(body);
+        var $ = parser.load(html);
 
         var el = mainSelector;// + ' ' + selector.selector;
         var match = $(el);
@@ -68,13 +75,16 @@ function _crawling(packageName, pageNumber, callback) {
             var title = $(mainSelector).find('.review-body span.review-title')[i].children[0] || {data: '', parent:{next: {data: ''}}};
 
             reviews.push( {
-                id: id,
-                image: auth_image,
+                commentid: id,
+                imagesource: '',
                 name: name,
-                date: moment(date, 'YYYY년 MM월 DD일', 'ko').valueOf(),
+                date: moment(date, 'YYYY년 MM월 DD일').valueOf(),
                 rating: rating_number,
                 title: title.data,
-                body: title.parent.next.data
+                body: title.parent.next.data,
+                applicationid: body.applicationId,
+                location: body.location,
+                market: 'amazon'
             });
         }
 
@@ -98,11 +108,10 @@ function _request(url, body, callback){
 };
 
 function _insertQuery(applicationId, datas, callback) {
-    async.times(datas.length, function(n, next) {
-        var data = datas[n];
-        store.get('mysql').query('insert into Reviews (applicationid, commentid, imagesource, name, date, rating, title, body, market) values (?,?,?,?,?,?,?,?,?)',
-            [applicationId, data.id, data.image,data.name, data.date, data.rating, data.title, data.body, 'playGoogle'], next);
-    },function done(error, results) {
-        if(callback) { callback(error, results); }
-    });
+    var bulk = [];
+    for( var i = 0; i < datas.length; i++ ) {
+        bulk.push(_.values(datas[i]));
+    }
+
+    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market) VALUES ?', [bulk], callback);
 }
