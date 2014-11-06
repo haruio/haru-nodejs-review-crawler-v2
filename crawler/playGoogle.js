@@ -30,19 +30,6 @@ exports.crawling = function(option, callback) {
     });
 };
 
-exports.requestTotal = function(applicationId, packageName, callback) {
-    request(util.format(config.marketUrl, packageName, 'ko'), function(error, res, body) {
-        // TODO 현재 100개 제한.
-
-        var $ = parser.load(body);
-
-        var total = $('meta[itemprop=ratingCount]').attr('content');
-        console.log(total);
-
-        callback(error, total);
-    });
-};
-
 exports.calcPageCount = function(reviewCount) {
     return parseInt( (reviewCount/config.numberOfReview) + 1);
 };
@@ -63,7 +50,8 @@ function _crawling(body, callback) {
         reviewSortOrder: 0,
         reviewType: 0,
         pageNum: body.page,
-        xhr: 1}, function(error, res, html) {
+        xhr: 1,
+        hl: body.location}, function(error, res, html) {
 
         html = html.replace('\" ', '').replace(' \"', '').replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u003d\\/g, '=').replace(/\\\"/g, '"');
 
@@ -81,14 +69,43 @@ function _crawling(body, callback) {
             var name = $(mainSelector).find('.review-header .review-info .author-name a')[i] ? $(mainSelector).find('.review-header .review-info .author-name a')[i].children[0].data : '';
             var date = $(mainSelector).find('.review-header .review-info .review-date')[i] ? $(mainSelector).find('.review-header .review-info .review-date')[i].children[0].data : '';
             var rating_string = $(mainSelector).find('.review-header .review-info .review-info-star-rating .tiny-star.star-rating-non-editable-container')[i] ? $(mainSelector).find('.review-header .review-info .review-info-star-rating .tiny-star.star-rating-non-editable-container')[i].attribs['aria-label'] : '';
-            var rating_number = Number(rating_string.split('만점에 ')[1].match(/\d+/)[0]);
             var title = $(mainSelector).find('.review-body span.review-title')[i].children[0] || {data: '', parent:{next: {data: ''}}};
+            var rating_number = 0;
+            var utc = 0;
+
+            if( body.location === 'ko' ) {
+                // 2014년 11월 3일
+                utc = moment(date, 'YYYY년 MM월 DD일').valueOf();
+                // 별표 5개 만점에 5개로 평가했습니다.
+                rating_number = Number(rating_string.split('만점에 ')[1].match(/\d+/)[0]);
+            } else if( body.location == 'en') {
+                // October 16, 2014
+                utc = moment(date, 'MMM DD, YYYY', 'en').valueOf();
+                // Rated 5 stars out of five stars
+                rating_number = Number(rating_string.match(/\d+/)[0]);
+            } else if( body.location == 'ja') {
+                // 2014年7月9日
+                utc = moment(date, 'YYYY年MM月DD日', 'ja').valueOf();
+                // 5つ星のうち5つ星で評価しました
+                rating_number = Number(rating_string.split('つ星のうち')[1].match(/\d+/)[0]);
+            } else if( body.location == 'de') {
+                // 11. Februar 2013
+                utc = moment(date, 'DD. MMM YYYY', 'de').valueOf();
+                // Mit 3 von fünf Sternen bewertet
+                rating_number = Number(rating_string.match(/\d+/)[0]);
+
+            } else if( body.location == 'fr') {
+                // 17 novembre 2012
+                utc = moment(date, 'DD MMM YYYY', 'fr').valueOf();
+                // 5 étoiles sur cinq
+                rating_number = Number(rating_string.match(/\d+/)[0]);
+            }
 
             reviews.push( {
                 commentid: id,
-                imagesource: '',
+                imagesource: auth_image,
                 name: name,
-                date: moment(date, 'YYYY년 MM월 DD일').valueOf(),
+                date: utc,
                 rating: rating_number,
                 title: title.data,
                 body: title.parent.next.data,
@@ -109,7 +126,8 @@ function _request(url, body, callback){
         method: 'POST',
         headers: {
             'User-Agent': 'request',
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'Accept-Language': 'ko-KR,ko;q=0.8,en-UxS;q=0.6,en;q=0.4',
         },
         formData: body
     };
