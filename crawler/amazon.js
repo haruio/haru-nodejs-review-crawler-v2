@@ -55,6 +55,7 @@ function _insertQuery(applicationId, datas, callback) {
 
 function _crawling(body, callback) {
     var reviews = [];
+    console.log(util.format(config.url, body.packageName, body.page, body.page));
 
     _request(util.format(config.url, body.packageName, body.page, body.page), function (error, res, html) {
         var mainSelector = config.mainSelector;

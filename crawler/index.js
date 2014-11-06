@@ -4,5 +4,6 @@
 
 module.exports = {
     playGoogle: require('./playGoogle.js'),
-    amazon: require('./amazon.js')
+    amazon: require('./amazon.js'),
+    market360: require('./market360.js')
 };
