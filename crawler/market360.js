@@ -29,6 +29,13 @@ exports.crawling = function(option, callback) {
     });
 };
 
+exports.requestSuccessUrl = function(body) {
+    request.get({
+        url: util.format(config.successUrl),
+        timeout: 500
+    }, body.applicationId);
+};
+
 function _insertQuery(applicationId, datas, callback) {
     var bulk = [];
     for( var i = 0; i < datas.length; i++ ) {
