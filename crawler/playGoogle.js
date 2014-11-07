@@ -127,7 +127,7 @@ function _request(url, body, callback){
         headers: {
             'User-Agent': 'request',
             'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-            'Accept-Language': 'ko-KR,ko;q=0.8,en-UxS;q=0.6,en;q=0.4',
+            'Accept-Language': 'ko-KR,ko;q=0.8,en-UxS;q=0.6,en;q=0.4'
         },
         formData: body
     };
