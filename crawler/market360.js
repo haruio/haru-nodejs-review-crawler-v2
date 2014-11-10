@@ -42,7 +42,7 @@ function _insertQuery(applicationId, datas, callback) {
         bulk.push(_.values(datas[i]));
     }
 
-    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market) VALUES ?', [bulk], callback);
+    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
 }
 
 
@@ -65,8 +65,9 @@ function _crawling(body, callback) {
             }
 
             // "2014-11-06 00:30:58",
-            var utc = moment(message.create_time, 'YYYY-MM-DD HH:mm:ss').valueOf();
-
+            var _moment = moment(message.create_time, 'YYYY-MM-DD HH:mm:ss');
+            var utc = _moment.valueOf();
+            var strdate =  _moment.format('YYYY-MM-DD');
 
             reviews.push( {
                 commentid: message.qid +":" + message.msgid,
@@ -78,7 +79,8 @@ function _crawling(body, callback) {
                 body: message.content,
                 applicationid: body.applicationId,
                 location: body.location,
-                market: body.market
+                market: body.market,
+                strdate: strdate
             });
         }
         if(callback){ return callback(error, reviews); }

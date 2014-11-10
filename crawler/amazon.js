@@ -42,7 +42,7 @@ function _insertQuery(applicationId, datas, callback) {
     for( var i = 0; i < datas.length; i++ ) {
         bulk.push(_.values(datas[i]));
     }
-    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market) VALUES ?', [bulk], callback);
+    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
 }
 
 
@@ -117,6 +117,7 @@ function _getReviewType1($, mainSelector, body) {
         var text = $(tableSelector+' div:nth-of-type('+(i+1)+') div.reviewText').text();
 
         var utc =  moment(date, format, locale).valueOf();
+        var strdate =  moment(date, format, locale).format('YYYY-MM-DD');
         var rating_number = Number(rating_string.split('_')[2].match(/\d+/)[0]);
 
         reviews.push( {
@@ -129,7 +130,8 @@ function _getReviewType1($, mainSelector, body) {
             body: text,
             applicationid: body.applicationId,
             location: body.location,
-            market: 'amazon'
+            market: 'amazon',
+            strdate: strdate
         });
     }
 
@@ -148,18 +150,22 @@ function _getReviewType2($, mainSelector, body) {
         var rating_number = Number(rating_string.match(/\d+/)[0]);
         var title = match.find('div.a-row a.a-link-normal.review-title.a-color-base.a-text-normal.a-text-bold')[i].children[0].data;
         var _body = match.find('div.a-row.a-spacing-top-mini.review-data div.a-section.review-text')[i].children[0].data;
-        
+
+        var utc = moment(date, 'YYYY년 MM월 DD일').valueOf();
+        var strdate =  moment(date, 'YYYY년 MM월 DD일').format('YYYY-MM-DD');
+
         reviews.push( {
             commentid: id,
             imagesource: '',
             name: name,
-            date: moment(date, 'YYYY년 MM월 DD일').valueOf(),
+            date: utc,
             rating: rating_number,
             title: title,
             body: _body,
             applicationid: body.applicationId,
             location: body.location,
-            market: 'amazon'
+            market: 'amazon',
+            strdate: strdate
         });
 
     }
