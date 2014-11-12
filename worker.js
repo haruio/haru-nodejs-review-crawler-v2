@@ -65,6 +65,20 @@ function on_connect(err, conn) {
             });
         }
     });
+
+    conn.on('close', function(error) {
+        console.log('[close] : ', error);
+    });
+
+    conn.on('error', function(error) {
+        console.log('[error] : ',error);
+        setTimeout(function(){
+            console.log('try reconnect...');
+            amqp.connect(queue.url, on_connect);
+        }, 1000);
+    });
+
+
 }
 
 amqp.connect(queue.url, on_connect);

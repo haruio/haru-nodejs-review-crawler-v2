@@ -17,7 +17,7 @@ RabbitMQ.prototype.connect = function() {
 
         amqp.connect( queue.url, function(error, conn) {
             self.connection[queueName] = conn;
-            console.log('[%d] rabbitmq %s connected', process.pid, queueName);
+            log.info('[%d] rabbitmq %s connected', process.pid, queueName);
         });
     })
 

@@ -42,7 +42,14 @@ function _insertQuery(applicationId, datas, callback) {
     for( var i = 0; i < datas.length; i++ ) {
         bulk.push(_.values(datas[i]));
     }
-    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
+    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], function(error, results) {
+        if (error) {
+            //{ [Error: ER_DUP_ENTRY: Duplicate entry 'R2UKRVFKJIWVIN' for key 'reviews_commentid_unique'] code: 'ER_DUP_ENTRY', errno: 1062, sqlState: '23000', index: 0 }
+            console.log(error);
+
+        }
+        callback(error, results);
+    });
 }
 
 
