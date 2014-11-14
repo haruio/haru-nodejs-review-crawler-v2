@@ -36,13 +36,13 @@ function on_connect(err, conn) {
 
         function doWork(msg) {
             var body = JSON.parse(msg.content);
-            console.log(" [%s] Received %s : %d",process.pid, body.market, body.page);
+            //console.log(" [%s] Received %s : %d",process.pid, body.market, body.page);
             crawler[body.market].crawling( body ,function(error, results) {
-                console.log(" [%s] Done %s : %d",process.pid, body.market, body.page);
+                //console.log(" [%s] Done %s : %d",process.pid, body.market, body.page);
                 ch.ack(msg);
-                console.log(error);
+                //console.log(error);
 
-                if( error && error.code === 'ER_DUP_ENTRY' ) {
+                if( error && error.message === 'ER_DUP_ENTRY' ) {
                     // MySql 중복시 crawling 완료
                     //crawler[body.market].requestSuccessUrl(body);
                 } else if( error && body.page === 1 ) {
@@ -56,7 +56,7 @@ function on_connect(err, conn) {
 
                     (function(body) {
                         var randomTime = _.random(config.crawlerInterval.min, config.crawlerInterval.max);
-                        console.log('sleeptime : %d', randomTime);
+                        //console.log('sleeptime : %d', randomTime);
                         setTimeout(function(){
                             rabbitmq.publish('crawler', body);
                         }, randomTime);
@@ -67,13 +67,13 @@ function on_connect(err, conn) {
     });
 
     conn.on('close', function(error) {
-        console.log('[close] : ', error);
+        //console.log('[close] : ', error);
     });
 
     conn.on('error', function(error) {
-        console.log('[error] : ',error);
+        //console.log('[error] : ',error);
         setTimeout(function(){
-            console.log('try reconnect...');
+            //console.log('try reconnect...');
             amqp.connect(queue.url, on_connect);
         }, 1000);
     });

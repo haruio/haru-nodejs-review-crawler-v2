@@ -3,11 +3,16 @@
  */
 var request = require('request');
 var config = require('./tstore.json');
+
+var _s = require('underscore.string');
 var _ = require('underscore');
+
 var async = require('async');
 var moment = require('moment');
-var store = require('haru-nodejs-store');
 var util = require('util');
+
+var keys = require('haru-nodejs-util').keys;
+var store = require('haru-nodejs-store');
 
 
 exports.crawling = function(option, callback) {
@@ -18,7 +23,7 @@ exports.crawling = function(option, callback) {
             });
         },
         function insertQuery(results, callback) {
-            _insertQuery(option.applicationId, results, function(error, results) {
+            _insertQuery(option, results, function(error, results) {
                 callback(error, results);
             });
         }
@@ -36,24 +41,32 @@ exports.requestSuccessUrl = function(body) {
     }, body.applicationId);
 };
 
-function _insertQuery(applicationId, datas, callback) {
-    var bulk = [];
-    for( var i = 0; i < datas.length; i++ ) {
-        bulk.push(_.values(datas[i]));
-    }
+function _insertQuery(options, datas, callback) {
+    var marketCommentIdKey = keys.marketCommentIdKey(options.applicationId, options.market, options.location);
 
-    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
+    var multi = store.get('public').multi();
+    for( var i = 0; i < datas.length; i++ ) {
+        multi.sadd(marketCommentIdKey, datas[i].commentid);
+    }
+    multi.exec(function(error, results) {
+        var count = 0;
+        var bulk = [];
+
+        for(var i = 0; results && i < results.length; i++ ) {
+            if( results[i] ) { bulk.push(_.values(datas[i])); }
+            count += results[i];
+        }
+
+        console.log('[%s] p: %d, count: %d', options.market, options.page, count);
+
+        if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
+
+        store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
+    });
 }
 
 
 function _crawling(body, callback) {
-    body = {
-        packageName: "0000674114",
-        page: 1,
-        applicationId: 'appid',
-        location: 'ko',
-        market: 'tstore'
-    };
     _request(config.url , {replyBest: "N", prodId: body.packageName, currentPage: body.page},function (error, res, json) {
         json = JSON.parse(json);
 
@@ -80,15 +93,11 @@ function _crawling(body, callback) {
                 market: body.market,
                 strdate: strdate
             });
-
-
         }
 
         if(callback){ return callback(error, reviews); }
     });
 }
-
-_crawling();
 
 function _request(url, body, callback){
     var  market360_options = {
