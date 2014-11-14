@@ -8,10 +8,11 @@ var parser = require('whacko');
 var util = require('util');
 var async = require('async');
 var moment = require('moment');
-var store = require('haru-nodejs-store');
 
 var jconv = require('jconv');
 
+var keys = require('haru-nodejs-util').keys;
+var store = require('haru-nodejs-store');
 
 exports.crawling = function(option, callback) {
     async.waterfall([
@@ -21,7 +22,7 @@ exports.crawling = function(option, callback) {
             });
         },
         function insertQuery(results, callback) {
-            _insertQuery(option.applicationId, results, function(error, results) {
+            _insertQuery(option, results, function(error, results) {
                 callback(error, results);
             });
         }
@@ -37,18 +38,28 @@ exports.requestSuccessUrl = function(body) {
     }, body.applicationId);
 };
 
-function _insertQuery(applicationId, datas, callback) {
-    var bulk = [];
-    for( var i = 0; i < datas.length; i++ ) {
-        bulk.push(_.values(datas[i]));
-    }
-    store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], function(error, results) {
-        if (error) {
-            //{ [Error: ER_DUP_ENTRY: Duplicate entry 'R2UKRVFKJIWVIN' for key 'reviews_commentid_unique'] code: 'ER_DUP_ENTRY', errno: 1062, sqlState: '23000', index: 0 }
-            console.log(error);
+function _insertQuery(options, datas, callback) {
+    var marketCommentIdKey = keys.marketCommentIdKey(options.applicationId, options.market, options.location);
 
+    var multi = store.get('public').multi();
+    for( var i = 0; i < datas.length; i++ ) {
+        multi.sadd(marketCommentIdKey, datas[i].commentid);
+    }
+    multi.exec(function(error, results) {
+        var count = 0;
+        var bulk = [];
+
+        for(var i = 0; results && i < results.length; i++ ) {
+            if( results[i] ) { bulk.push(_.values(datas[i])); }
+            count += results[i];
         }
-        callback(error, results);
+
+        console.log('[%s] p: %d, count: %d', options.market, options.page, count);
+
+
+        if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
+
+        store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
     });
 }
 
