@@ -1,0 +1,14 @@
+{
+  "numberOfReview": 29,
+  "url": "http://ax.phobos.apple.com.edgesuite.net/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=%s&pageNumber=%s&sortOrdering=4&sortAscending=false&type=Purple+Software&mt=8",
+
+  "successUrl": "http://172.16.101.71:8000/qna/webhook?appid=%s&messagetype=crawler",
+
+  "countryId": {
+    "en" : "143441-1",
+    "ko" : "143466-1",
+    "ja" : "143462-1",
+    "cn" : "143465-1",
+    "fr" : "143442-2"
+  }
+}

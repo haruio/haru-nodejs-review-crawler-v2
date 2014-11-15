@@ -40,6 +40,8 @@ function on_connect(err, conn) {
             crawler[body.market].crawling( body ,function(error, results) {
                 //console.log(" [%s] Done %s : %d",process.pid, body.market, body.page);
                 ch.ack(msg);
+
+                console.log('[%s] p: %d %s', body.market, body.page, body.location);
                 //console.log(error);
 
                 if( error && error.message === 'ER_DUP_ENTRY' ) {

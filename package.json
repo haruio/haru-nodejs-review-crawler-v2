@@ -23,6 +23,7 @@
     "underscore": "^1.7.0",
     "underscore.string": "^2.3.3",
     "uuid": "^2.0.1",
-    "whacko": "^0.17.1"
+    "whacko": "^0.17.1",
+    "xml2js": "^0.4.4"
   }
 }

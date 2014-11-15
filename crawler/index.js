@@ -6,5 +6,6 @@ module.exports = {
     playGoogle: require('./playGoogle.js'),
     amazon: require('./amazon.js'),
     market360: require('./market360.js'),
-    tstore: require('./tstore.js')
+    tstore: require('./tstore.js'),
+    appStore: require('./appStore.js')
 };

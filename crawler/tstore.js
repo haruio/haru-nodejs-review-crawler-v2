@@ -57,8 +57,6 @@ function _insertQuery(options, datas, callback) {
             count += results[i];
         }
 
-        console.log('[%s] p: %d, count: %d', options.market, options.page, count);
-
         if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
 
         store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
