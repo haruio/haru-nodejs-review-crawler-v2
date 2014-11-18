@@ -31,10 +31,11 @@ exports.crawling = function(option, callback) {
 
 exports.requestSuccessUrl = function(body) {
     request.get({
-        url: util.format(config.successUrl),
+        url: util.format(config.successUrl, body.applicationId),
         timeout: 500
     }, body.applicationId);
 };
+
 
 
 

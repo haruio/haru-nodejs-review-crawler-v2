@@ -46,7 +46,8 @@ function on_connect(err, conn) {
 
                 if( error && error.message === 'ER_DUP_ENTRY' ) {
                     // MySql 중복시 crawling 완료
-                    //crawler[body.market].requestSuccessUrl(body);
+                    log.info('[%s] complete crawling market: %s, page: %d, location: %s', process.pid, body.market, body.page, body.location);
+                    crawler[body.market].requestSuccessUrl(body);
                 } else if( error && body.page === 1 ) {
                     // page === 1에서 오류 발생시 마켓 정보 오류
                 } else if ( error ) {
@@ -58,10 +59,10 @@ function on_connect(err, conn) {
 
                     (function(body) {
                         var randomTime = _.random(config.crawlerInterval.min, config.crawlerInterval.max);
-                        //console.log('sleeptime : %d', randomTime);
                         setTimeout(function(){
                             rabbitmq.publish('crawler', body);
                         }, randomTime);
+
                     })(body);
                 }
             });

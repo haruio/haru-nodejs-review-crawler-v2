@@ -13,7 +13,7 @@
     "uk": "http://www.amazon.co.uk"
   },
 
-  "successUrl": "http://172.16.101.71:8000/qna/webhook?appid=%s&messagetype=crawler",
+  "successUrl": "http://plugy.io/qna/webhook?appid=%s&messagetype=crawler&store=amazon",
   "mainSelector1": "table#productReviews",
   "mainSelector2": "div.a-section.review",
 

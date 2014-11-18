@@ -1,6 +1,7 @@
 {
   "numberOfReview": 10,
   "url": "http://m.tstore.co.kr/mobilepoc/reply/replyTotalListMore.omp",
+  "successUrl": "http://plugy.io/qna/webhook?appid=%s&messagetype=crawler&store=tstore",
   "selectors":
   [
     {

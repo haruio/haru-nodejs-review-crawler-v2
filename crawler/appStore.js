@@ -25,15 +25,13 @@ exports.crawling = function(option, callback) {
             });
         }
     ], function done(error, results) {
-        //request.get(util.format(config.successUrl, body.applicationId));
-
         if(callback){ return callback(error, results); }
     });
 };
 
 exports.requestSuccessUrl = function(body) {
     request.get({
-        url: util.format(config.successUrl),
+        url: util.format(config.successUrl, body.applicationId),
         timeout: 500
     }, body.applicationId);
 };
@@ -132,6 +130,7 @@ function _crawling(body, callback) {
             });
             rs.current = page[0] - 0;
             rs.sum = page[1] - 0;
+
             if (list && list.length) {
                 list.forEach(function(one, index) {
                     var temp = {};
@@ -175,7 +174,6 @@ function _crawling(body, callback) {
                     });
                 });
             }
-
             callback(error, reviews);
         });
     });

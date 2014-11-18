@@ -1,8 +1,8 @@
 {
   "numberOfReview": 29,
-  "url": "http://ax.phobos.apple.com.edgesuite.net/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=%s&pageNumber=%s&sortOrdering=4&sortAscending=false&type=Purple+Software&mt=8",
+  "url": "http://ax.phobos.apple.com.edgesuite.net/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=%s&pageNumber=%s&sortOrdering=4&sortAscending=true&type=Purple+Software&mt=8",
 
-  "successUrl": "http://172.16.101.71:8000/qna/webhook?appid=%s&messagetype=crawler",
+  "successUrl": "http://plugy.io/qna/webhook?appid=%s&messagetype=crawler&store=appStore",
 
   "countryId": {
     "en" : "143441-1",

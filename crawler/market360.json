@@ -9,5 +9,6 @@
       "attr": "src",
       "property": "authimage"
     }
-  ]
+  ],
+  "successUrl": "http://plugy.io/qna/webhook?appid=%s&messagetype=crawler&store=market360"
 }

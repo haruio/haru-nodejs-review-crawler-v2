@@ -3,7 +3,7 @@
   "url": "https://play.google.com/store/getreviews",
   "marketUrl": "https://play.google.com/store/apps/details?id=%s&hl=%s",
   "mainSelector": "div.single-review",
-  "successUrl": "http://172.16.101.71:8000/qna/webhook?appid=%s&messagetype=crawler",
+  "successUrl": "http://plugy.io/qna/webhook?appid=%s&messagetype=crawler&store=playGoogle",
   "selectors":
   [
     {
