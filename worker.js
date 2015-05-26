@@ -73,7 +73,7 @@ function on_connect(err, conn) {
     });
 
     conn.on('close', function(error) {
-        //console.log('[close] : ', error);
+        console.log('[close] : ', error);
     });
 
     conn.on('error', function(error) {
