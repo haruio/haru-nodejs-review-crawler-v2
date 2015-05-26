@@ -2,13 +2,15 @@
  * Created by syntaxfish on 14. 11. 6..
  */
 var amqp = require('amqplib/callback_api');
-var queue = require('./config').mqueue.crawler;
+var queue = config.mqueue.crawler;
 var crawler = require('./crawler');
-var config = require('./config');
 var store = require('haru-nodejs-store');
 
 var RabbitMq = require('./connectors/rabbitmq');
 var rabbitmq = new RabbitMq({crawler: config.mqueue.crawler});
+
+var keys = require('haru-nodejs-util').keys;
+
 
 var _ = require('underscore');
 
@@ -39,10 +41,11 @@ function on_connect(err, conn) {
             //console.log(" [%s] Received %s : %d",process.pid, body.market, body.page);
             crawler[body.market].crawling( body ,function(error, results) {
                 //console.log(" [%s] Done %s : %d",process.pid, body.market, body.page);
+
+                _markCrawlingJob(body);
                 ch.ack(msg);
 
                 console.log('[%s] p: %d %s', body.market, body.page, body.location);
-                //console.log(error);
 
                 if( error && error.message === 'ER_DUP_ENTRY' ) {
                     // MySql 중복시 crawling 완료
@@ -80,8 +83,23 @@ function on_connect(err, conn) {
             amqp.connect(queue.url, on_connect);
         }, 1000);
     });
-
-
 }
 
 amqp.connect(queue.url, on_connect);
+
+
+//{ market: 'amazon',
+//    page: 1,
+//    location: 'fr',
+//    packageName: 'B00B2KKL56',
+//    applicationId: 'appid' }
+function _markCrawlingJob(body) {
+    if( body.page === 1) {
+        body.timestamp = Date.now();
+        store.get('public').zadd(keys.crawlingTimeZsetKey(), Date.now(), JSON.stringify(body) );
+    }
+};
+
+function _makeCrawlingId(body) {
+    return body.applicationId + ':'+ body.location;
+};

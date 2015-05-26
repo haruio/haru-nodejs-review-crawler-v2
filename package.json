@@ -1,5 +1,5 @@
 {
-  "name": "nodejs-reviewcrawler",
+  "name": "review",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -12,11 +12,11 @@
     "cors": "^2.5.0",
     "debug": "~0.7.4",
     "express": "~4.2.0",
-    "haru-nodejs-store": "0.0.33",
-    "haru-nodejs-util": "0.0.41",
+    "haru-nodejs-store": "0.0.49",
+    "haru-nodejs-util": "0.0.48",
     "iconv": "^2.1.4",
     "jconv": "^0.1.5",
-    "moment": "^2.8.3",
+    "moment": "^2.8.4",
     "morgan": "~1.0.0",
     "multer": "^0.1.6",
     "request": "^2.47.0",
