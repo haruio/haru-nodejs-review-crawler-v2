@@ -21,6 +21,7 @@ exports.crawling = function(option, callback) {
         },
         function insertQuery(results, callback) {
             _insertQuery(option, results, function(error, results) {
+                console.log(error);
                 callback(error, results);
             });
         }
@@ -46,6 +47,7 @@ function _insertQuery(options, datas, callback) {
     for( var i = 0; i < datas.length; i++ ) {
         multi.sadd(marketCommentIdKey, datas[i].commentid);
     }
+
     multi.exec(function(error, results) {
         var count = 0;
         var bulk = [];
@@ -55,7 +57,12 @@ function _insertQuery(options, datas, callback) {
             count += results[i];
         }
 
-        if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
+        console.log(bulk.length);
+        if(bulk.length === 0) {
+            callback(null, []);
+        }
+
+        //if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
 
         store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
     });

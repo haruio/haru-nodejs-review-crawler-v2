@@ -1,0 +1,78 @@
+{
+  "st": {
+    "console": {
+      "level": "verbose",
+      "colorize": true
+    },
+    "file": {
+      "level": "file",
+      "filename": "defalut.log",
+      "json": false,
+      "colorize": false
+    },
+    "mongodb": {
+      "level": "info",
+      "host" : "mongo.haru.io",
+      "port": 40000,
+      "db":"haru_logs",
+      "collection": "st:write:logs"
+    },
+    "config": {
+      "levels": {
+        "verbose": 0,
+        "error": 1,
+        "warn": 2,
+        "info": 3,
+        "debug": 4,
+        "file": 5
+      },
+      "colors": {
+        "verbose": "blue",
+        "error": "red",
+        "warn": "yellow",
+        "info": "green",
+        "debug": "red",
+        "file": "white"
+      },
+      "exitOnError": false
+    }
+  },
+  "rs": {
+    "console": {
+      "level": "verbose",
+      "colorize": true
+    },
+    "file": {
+      "level": "file",
+      "filename": "defalut.log",
+      "json": false,
+      "colorize": false
+    },
+    "mongodb": {
+      "level": "info",
+      "host": "mongo.haru.io",
+      "port": 40000,
+      "db": "haru_logs",
+      "collection": "rs:write:logs"
+    },
+    "config": {
+      "levels": {
+        "verbose": 0,
+        "error": 1,
+        "warn": 2,
+        "info": 3,
+        "debug": 4,
+        "file": 5
+      },
+      "colors": {
+        "verbose": "blue",
+        "error": "red",
+        "warn": "yellow",
+        "info": "green",
+        "debug": "red",
+        "file": "white"
+      },
+      "exitOnError": false
+    }
+  }
+}

@@ -29,33 +29,35 @@ store.connect(config.store);
 
 // // Exception
 process.on('uncaughtException', function(error) {
-  log.error('[%d] uncaughtException : ', process.pid, error.stack);
+    log.error('[%d] uncaughtException : ', process.pid, error.stack);
 });
 
 if( cluster.isMaster ) {
-  var processCount = require('os').cpus().length - 2;
-  if( processCount < 1 ) {
+    var processCount = require('os').cpus().length - 2;
+    if( processCount < 1 ) {
+        processCount = 1;
+    }
+
     processCount = 1;
-  }
 
-  cluster.on('exit',function(worker) {
-    log.error('[%d] worker is exit', worker.process.pid);
-    cluster.fork();
-  });
+    cluster.on('exit',function(worker) {
+        log.error('[%d] worker is exit', worker.process.pid);
+        cluster.fork();
+    });
 
-  for( var i = 0; i < processCount; i++ ) {
-    var worker = cluster.fork();
-  }
+    for( var i = 0; i < processCount; i++ ) {
+        var worker = cluster.fork();
+    }
 
 } else {
-  require('../worker');
+    require('../worker');
 }
 
 
 function _startBackgroundJob() {
-  store.get('public').zrange(keys.crawlingTimeZsetKey(), 0, -1, function(error, results) {
-    console.log(results);
-  });
+    store.get('public').zrange(keys.crawlingTimeZsetKey(), 0, -1, function(error, results) {
+        console.log(results);
+    });
 };
 
 
@@ -65,16 +67,16 @@ function _registerBackgroundJob() {
 
 
 function _getConfig() {
-  var globalConfig = require('../../config.json');
-  var appName = require('../package.json').name;
-  var config = globalConfig[globalConfig.namespace];
+    var globalConfig = require('../../config.json');
+    var appName = require('../package.json').name;
+    var config = globalConfig[globalConfig.namespace];
 
-  config.port = globalConfig[appName].port;
-  config.crawlerInterval = globalConfig[appName].crawlerInterval;
-  config.namespace = globalConfig.namespace;
-  config.sessionToken = globalConfig.sessionToken;
-  config.query = globalConfig.query;
+    config.port = globalConfig[appName].port;
+    config.crawlerInterval = globalConfig[appName].crawlerInterval;
+    config.namespace = globalConfig.namespace;
+    config.sessionToken = globalConfig.sessionToken;
+    config.query = globalConfig.query;
 
-  return config;
+    return config;
 };
 

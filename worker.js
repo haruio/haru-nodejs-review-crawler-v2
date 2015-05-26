@@ -32,7 +32,7 @@ function on_connect(err, conn) {
         if (err !== null) return bail(err, conn);
         ch.assertQueue(q, {durable: true}, function(err, _ok) {
             ch.consume(q, doWork, {noAck: false});
-            ch.prefetch(1, true);
+            //ch.prefetch(1, true);
             console.log(" [*] Waiting for messages. To exit press CTRL+C");
         });
 
@@ -41,6 +41,10 @@ function on_connect(err, conn) {
             //console.log(" [%s] Received %s : %d",process.pid, body.market, body.page);
             crawler[body.market].crawling( body ,function(error, results) {
                 //console.log(" [%s] Done %s : %d",process.pid, body.market, body.page);
+                if(error) {
+                    console.log('[Error] ', error.stack);
+                    process.exit(1);
+                }
 
                 _markCrawlingJob(body);
                 ch.ack(msg);
@@ -50,7 +54,7 @@ function on_connect(err, conn) {
                 if( error && error.message === 'ER_DUP_ENTRY' ) {
                     // MySql 중복시 crawling 완료
                     log.info('[%s] complete crawling market: %s, page: %d, location: %s', process.pid, body.market, body.page, body.location);
-                    crawler[body.market].requestSuccessUrl(body);
+                    //crawler[body.market].requestSuccessUrl(body);
                 } else if( error && body.page === 1 ) {
                     // page === 1에서 오류 발생시 마켓 정보 오류
                 } else if ( error ) {
@@ -59,6 +63,8 @@ function on_connect(err, conn) {
                 } else {
                     // 다음 페이지 crawling 진행
                     body.page++;
+                    console.log('[Send] send next page : ', body.page);
+                    
 
                     (function(body) {
                         var randomTime = _.random(config.crawlerInterval.min, config.crawlerInterval.max);
