@@ -15,15 +15,10 @@ var store = require('haru-nodejs-store');
 exports.crawling = function(option, callback) {
     async.waterfall([
         function crawling(callback) {
-            _crawling(option, function(error, results) {
-                callback(error, results);
-            });
+            _crawling(option, callback);
         },
         function insertQuery(results, callback) {
-            _insertQuery(option, results, function(error, results) {
-                console.log(error);
-                callback(error, results);
-            });
+            _insertQuery(option, results, callback);
         }
     ], function done(error, results) {
         if(callback){ return callback(error, results); }
@@ -57,14 +52,9 @@ function _insertQuery(options, datas, callback) {
             count += results[i];
         }
 
-        console.log(bulk.length);
-        if(bulk.length === 0) {
-            callback(null, []);
-        }
+        if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
 
-        //if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
-
-        store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
+        store.get('mysql').query("insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?", [bulk], callback);
     });
 }
 

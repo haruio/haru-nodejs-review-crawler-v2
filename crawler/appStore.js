@@ -45,7 +45,7 @@ function _crawling(body, callback) {
     };
 
     _request({
-            url: util.format(config.url, body.packageName, (body.page-1) ),
+            url: util.format(config.url, (body.page-1), body.packageName, config.countryId[body.location] ),
             countryId: config.countryId[body.location]
         } , function (error, res, xml) {
         var reviews = [];
@@ -195,7 +195,7 @@ function _insertQuery(options, datas, callback) {
             count += results[i];
         }
 
-        if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
+        //if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
 
         store.get('mysql').query('insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?', [bulk], callback);
     });

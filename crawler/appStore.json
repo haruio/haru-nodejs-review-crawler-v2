@@ -1,7 +1,6 @@
 {
   "numberOfReview": 29,
-  "url": "http://ax.phobos.apple.com.edgesuite.net/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=%s&pageNumber=%s&sortOrdering=4&sortAscending=true&type=Purple+Software&mt=8",
-
+  "url" : "http://itunes.apple.com/rss/customerreviews/page=%s/id=%s/sortby=mostrecent/json?cc=%s",
   "successUrl": "http://plugy.io/qna/webhook?appid=%s&messagetype=crawler&store=appStore",
 
   "countryId": {
@@ -12,3 +11,4 @@
     "fr" : "143442-2"
   }
 }
+

@@ -1,111 +1,60 @@
 /**
  * Created by syntaxfish on 14. 11. 6..
  */
-var amqp = require('amqplib/callback_api');
-var queue = config.mqueue.crawler;
-var crawler = require('./crawler');
+var crawlers = require('./crawler');
 var store = require('haru-nodejs-store');
-
-var RabbitMq = require('./connectors/rabbitmq');
-var rabbitmq = new RabbitMq({crawler: config.mqueue.crawler});
 
 var keys = require('haru-nodejs-util').keys;
 
-
 var _ = require('underscore');
 
+var RabbitMQ = require('./connectors/rabbitmq.js');
+var rabbitmq = new RabbitMQ();
 
 store.connect(config.store);
 
-function bail(err, conn) {
-    console.error(err);
-    if (conn) conn.close(function() { process.exit(1); });
-}
+rabbitmq.consume('crawler', {}, function(err, target, ack) {
+    if(err) {
+        console.log(err.stack);
+        process.exit(1);
+    }
 
-function on_connect(err, conn) {
-    if (err !== null) return bail(err);
-    process.once('SIGINT', function() { conn.close(); });
+    var crawler = crawlers[target.market];
+    if(crawler) {
+        console.log(target);
+        crawler.crawling(target, function(error, result) {
+            if(error && error.message === 'ER_DUP_ENTRY') {
+                // TODO error handling
+                //log.info('[%s] complete crawling market: %s, page: %d, location: %s', process.pid, body.market, body.page, body.location);
+                console.log(error.message);
+            } else {
+                // 다음 페이지 crawling 진행
+                _publishNextPage(target, function() {
+                    _markCrawlingJob(target);
+                    ack();
+                });
+            }
 
-    var q = 'crawler';
 
-    conn.createChannel(function(err, ch) {
-        if (err !== null) return bail(err, conn);
-        ch.assertQueue(q, {durable: true}, function(err, _ok) {
-            ch.consume(q, doWork, {noAck: false});
-            //ch.prefetch(1, true);
-            console.log(" [*] Waiting for messages. To exit press CTRL+C");
         });
+    }
+});
 
-        function doWork(msg) {
-            var body = JSON.parse(msg.content);
-            //console.log(" [%s] Received %s : %d",process.pid, body.market, body.page);
-            crawler[body.market].crawling( body ,function(error, results) {
-                //console.log(" [%s] Done %s : %d",process.pid, body.market, body.page);
-                if(error) {
-                    console.log('[Error] ', error.stack);
-                    process.exit(1);
-                }
+process.once('SIGINT', function() {
+    rabbitmq.emit('SIGINT');
+});
 
-                _markCrawlingJob(body);
-                ch.ack(msg);
-
-                console.log('[%s] p: %d %s', body.market, body.page, body.location);
-
-                if( error && error.message === 'ER_DUP_ENTRY' ) {
-                    // MySql 중복시 crawling 완료
-                    log.info('[%s] complete crawling market: %s, page: %d, location: %s', process.pid, body.market, body.page, body.location);
-                    //crawler[body.market].requestSuccessUrl(body);
-                } else if( error && body.page === 1 ) {
-                    // page === 1에서 오류 발생시 마켓 정보 오류
-                } else if ( error ) {
-                    // 첫 crawling 완료
-                    //crawler[body.market].requestSuccessUrl(body);
-                } else {
-                    // 다음 페이지 crawling 진행
-                    body.page++;
-                    console.log('[Send] send next page : ', body.page);
-                    
-
-                    (function(body) {
-                        var randomTime = _.random(config.crawlerInterval.min, config.crawlerInterval.max);
-                        setTimeout(function(){
-                            rabbitmq.publish('crawler', body);
-                        }, randomTime);
-
-                    })(body);
-                }
-            });
-        }
-    });
-
-    conn.on('close', function(error) {
-        console.log('[close] : ', error);
-    });
-
-    conn.on('error', function(error) {
-        //console.log('[error] : ',error);
-        setTimeout(function(){
-            //console.log('try reconnect...');
-            amqp.connect(queue.url, on_connect);
-        }, 1000);
-    });
-}
-
-amqp.connect(queue.url, on_connect);
-
-
-//{ market: 'amazon',
-//    page: 1,
-//    location: 'fr',
-//    packageName: 'B00B2KKL56',
-//    applicationId: 'appid' }
-function _markCrawlingJob(body) {
-    if( body.page === 1) {
-        body.timestamp = Date.now();
-        store.get('public').zadd(keys.crawlingTimeZsetKey(), Date.now(), JSON.stringify(body) );
+function _markCrawlingJob(target) {
+    if( target.page === 1) {
+        target.timestamp = Date.now();
+        store.get('public').zadd(keys.crawlingTimeZsetKey(), Date.now(), JSON.stringify(target) );
     }
 };
 
-function _makeCrawlingId(body) {
-    return body.applicationId + ':'+ body.location;
-};
+function _publishNextPage(target, callback) {
+    target.page++;
+    var randomTime = _.random(config.crawlerInterval.min, config.crawlerInterval.max);
+    setTimeout(function(){
+        rabbitmq.publish('crawler', JSON.stringify(target), callback);
+    }, randomTime);
+}
