@@ -21,12 +21,11 @@ rabbitmq.consume('crawler', {}, function(err, target, ack) {
 
     var crawler = crawlers[target.market];
     if(crawler) {
-        console.log(target);
         crawler.crawling(target, function(error, result) {
             if(error && error.message === 'ER_DUP_ENTRY') {
                 // TODO error handling
-                //log.info('[%s] complete crawling market: %s, page: %d, location: %s', process.pid, body.market, body.page, body.location);
-                console.log(error.message);
+            } else if(error && error.message === 'ER_END_PAGE') {
+                // TODO error handling
             } else {
                 // 다음 페이지 crawling 진행
                 _publishNextPage(target, function() {
