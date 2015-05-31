@@ -3,6 +3,7 @@ var router = express.Router();
 
 var getHeader = require('haru-nodejs-util').common.getHeader;
 var crawlerConfig = config.crawlerConfig;
+var store = require('haru-nodejs-store');
 var RabbitMQ = require('../connectors/rabbitmq.js');
 var rabbitmq = new RabbitMQ();
 var async = require('async');
@@ -32,16 +33,26 @@ router.post('/fetch', function(req, res) {
                         packageName: option.packageName,
                         applicationId: input.applicationId
                     };
-                    rabbitmq.publish('crawler', JSON.stringify(msg));
+                    var strMsg = JSON.stringify(msg);
+
+                    store.get('public').hset('review:fetch', _genJobKey(msg), strMsg);
+                    //rabbitmq.publish('crawler', strMsg);
                 }
             });
         }
+
+        function _genJobKey(msg){
+            return msg.market+':'+msg.location+':'+msg.packageName+':'+msg.applicationId;
+        };
+
 
         next(null, null);
 
     },function done(error, results) {
         res.json({});
     });
+
+
 
 
 });
