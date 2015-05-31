@@ -1,6 +1,6 @@
 {
   "numberOfReview": 29,
-  "url" : "http://itunes.apple.com/rss/customerreviews/page=%s/id=%s/sortby=mostrecent/json?cc=%s",
+  "url" : "https://itunes.apple.com/rss/customerreviews/page=%s/id=%s/sortby=mostrecent/json?cc=%s",
   "successUrl": "http://plugy.io/qna/webhook?appid=%s&messagetype=crawler&store=appStore",
 
   "countryId": {
