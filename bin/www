@@ -50,7 +50,11 @@ if( cluster.isMaster ) {
     }
 
     // rest-api
-    require('../httpServer');
+    var app = require('../httpServer');
+    app.set('port', process.env.PORT || config.port);
+    var server = app.listen(app.get('port'), function() {
+        log.info('[%d] Express server listening on port %d', process.pid, server.address().port);
+    });
 } else {
     // crawler
     require('../worker');
