@@ -11,6 +11,8 @@ var util = require('util');
 
 var keys = require('haru-nodejs-util').keys;
 var store = require('haru-nodejs-store');
+var AppStore = require('app-store-reviews');
+var appStore = new AppStore();
 
 exports.crawling = function(option, callback) {
     async.waterfall([
@@ -37,146 +39,52 @@ exports.requestSuccessUrl = function(body) {
 };
 
 
-function _crawling(body, callback) {
-    var rs = {
-        current: 0,
-        sum: 0,
-        data: []
-    };
-
+function _crawling(target, callback) {
     _request({
-            url: util.format(config.url, (body.page-1), body.packageName, config.countryId[body.location] ),
-            countryId: config.countryId[body.location]
-        } , function (error, res, xml) {
-        var reviews = [];
-        var parseString = require('xml2js').parseString;
+            url: util.format(config.url, target.page, target.packageName, 'kr')
+        },
+        function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                var data = JSON.parse(body);
+                var entry = data['feed']['entry'];
+                var links = data['feed']['link'];
+                var reviews = [];
+                var now = moment();
+                if (entry && links) {
 
-        //console.log(xml);
+                    for (var i = 0; i < entry.length; i++) {
+                        var rawReview = entry[i];
+                        if ('content' in rawReview) {
+                            try {
+                                reviews.push({
+                                    commentid: rawReview['id']['label'],
+                                    imagesource: '',
+                                    name: rawReview['author']['name']['label'],
+                                    date: now.valueOf(),
+                                    rating: Number(rawReview['im:rating']['label']),
+                                    title: rawReview['title']['label'],
+                                    body: rawReview['content']['label'],
+                                    applicationid: target.applicationId,
+                                    location: target.location,
+                                    market: target.market,
+                                    strdate: now.format('YYYY-MM-DD')
+                                });
 
-        parseString(xml, function(err, result) {
-            var app = {};
-            var currentViewsNo = xml.match(/(\d+) Reviews For The Current Version/);
-
-            if( currentViewsNo === null ) {
-                return callback(err, []);
-            }
-
-
-            var ratingsNo = xml.match(/>(\d+) ratings</ig).map(function(one) {
-                return one.replace('>', '').replace(' ratings<', '') - 0;
-            });
-            // console.log(ratingsNo[1],ratingsNo[2])
-
-            var starsNo = xml.match(/star.*?, \d+ rating/ig);
-            starsNo = starsNo.map(function(one) {
-                return one.replace(' rating', '').replace('stars, ', '').replace('star, ', '') - 0;
-            });
-
-            var avgNo = xml.match(/rightInset="6" alt=".*?leftInset="6"/ig).slice(1, 3).map(function(one) {
-                one = one.replace('rightInset="6" alt="', '')
-                var int = one.slice(0, 1) - 0;
-                if (/a half stars/.test(one)) {
-                    int = int + 0.5;
+                            }
+                            catch (err) {
+                                //console.log(err);
+                            }
+                        }
+                    }
+                } else {
+                    if(callback) { return callback(new Error('ER_END_PAGE')); }
+                    else { return new Error('ER_END_PAGE'); }
                 }
-                return int;
-            });
-
-            var appData = result.Document.Path[0].PathElement;
-
-            app.category = appData[0].$.displayName;
-            app.categoryUrl = appData[0]._;
-            app.seller = appData[1].$.displayName;
-            app.sellerUrl = appData[1]._;
-            app.name = appData[2].$.displayName;
-            app.url = appData[2]._;
-            // avatar
-            var avatarData = result.Document.View[0].ScrollView[0].VBoxView[0].View[0].MatrixView[0].VBoxView[0].HBoxView[0].VBoxView[0].VBoxView[0].MatrixView;
-            var avatar = avatarData[0].GotoURL[0].View[0].PictureView[0].$.url;
-            app.avatar = avatar;
-
-            var otherInfo = avatarData[0].VBoxView[0].TextView;
-            app.updated_at = otherInfo[2].SetFontStyle[0]._.replace(/\n/g, '').replace(/^\s+|\s+$/g, '').replace('Updated  ', '');
-            app.lates_version = otherInfo[3].SetFontStyle[0]._.replace(/\n/g, '').replace(/^\s+|\s+$/g, '').replace('Current Version: ', '');
-            app.copyright = otherInfo[4].SetFontStyle[0]._.replace(/\n/g, '').replace(/^\s+|\s+$/g, '');
-            app.size = otherInfo[5].SetFontStyle[0]._.replace(/\n/g, '').replace(/^\s+|\s+$/g, '');
 
 
-            app.all_version_ratings = {
-                sum: ratingsNo[1],
-                avg: avgNo[0],
-                '5 stars': starsNo[0],
-                '4 stars': starsNo[1],
-                '3 stars': starsNo[2],
-                '2 stars': starsNo[3],
-                '1 stars': starsNo[4],
-            };
-
-            app.current_version_reviews = currentViewsNo[1] - 0;
-            app.current_version_ratings = {
-                sum: ratingsNo[2],
-                avg: avgNo[1],
-                '5 stars': starsNo[5],
-                '4 stars': starsNo[6],
-                '3 stars': starsNo[7],
-                '2 stars': starsNo[8],
-                '1 stars': starsNo[9]
-            };
-
-
-            var list = result.Document.View[0].ScrollView[0].VBoxView[0].View[0].MatrixView[0].VBoxView[0].VBoxView[0].VBoxView;
-            var page = result.Document.View[0].ScrollView[0].VBoxView[0].View[0].MatrixView[0].VBoxView[0].HBoxView[1].TextView[0].SetFontStyle[0].b;
-            page = page[0].split('of').map(function(one) {
-                return one.replace('Page', '').replace(/^\s+|\s+$/g, '');
-            });
-            rs.current = page[0] - 0;
-            rs.sum = page[1] - 0;
-
-            if (list && list.length) {
-                list.forEach(function(one, index) {
-                    var temp = {};
-                    // @todo username
-                    var infos = one.HBoxView[1].TextView[0].SetFontStyle[0]._.replace(/\n/g, '').replace(/by/g, '').replace(/^\s+|\s+$/g, '').split('-').slice(1, 3).map(function(one) {
-                        return one.replace(/^\s+|\s+$/g, '');
-                    });
-
-                    var username = one.HBoxView[1].TextView[0].SetFontStyle[0].GotoURL[0].b[0].replace(/^\s+|\s+$/g, '').replace(/\n/g, '');
-                    var uidtext = one.HBoxView[1].TextView[0].SetFontStyle[0].GotoURL[0].$.url;
-                    var uidmatch = uidtext.match(/userProfileId=(\d+)$/);
-
-                    temp.uid = uidmatch[1];
-                    temp.username = username;
-                    temp.version = infos[0].replace(/Version /g, '');
-                    temp.date = moment(new Date(infos[1])).format('YYYY-MM-DD');
-                    temp.rate = one.HBoxView[0].HBoxView[0].HBoxView[0].$.alt.replace(/stars/g, '').replace(/^\s+|\s+$/g, '');
-
-                    var url = one.HBoxView[0].HBoxView[0].HBoxView[1].VBoxView[0].GotoURL[0].$.url;
-                    var res = url.match(/userReviewId=(\d+)$/);
-
-                    temp.id = res[1];
-                    temp.title = one.HBoxView[0].TextView[0].SetFontStyle[0].b[0];
-                    temp.text = one.TextView[0].SetFontStyle[0]._;
-
-                    var _moment = moment(temp.date, 'YYYY-MM-DD');
-                    var utc = _moment.valueOf();
-
-                    reviews.push({
-                        commentid: temp.uid+':'+temp.id,
-                        imagesource: '',
-                        name: temp.username,
-                        date: utc,
-                        rating: temp.rate,
-                        title: temp.title ,
-                        body: temp.text,
-                        applicationid: body.applicationId,
-                        location: body.location,
-                        market: body.market,
-                        strdate: temp.date
-                    });
-                });
+                if(callback){ return callback(error, reviews); }
             }
-            callback(error, reviews);
         });
-    });
 }
 
 function _insertQuery(options, datas, callback) {
@@ -206,13 +114,19 @@ function _request(options, callback){
         url: options.url,
         method: 'GET',
         headers: {
-            'use-agent': 'iTunes/10.3.1 (Macintosh; Intel Mac OS X 10.6.8) AppleWebKit/533.21.1',
-            'X-Apple-Store-Front': options.countryId
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.111 Safari/537.36',
+            'Accept-Language': 'ko-KR,ko;q=0.8,en-UxS;q=0.6,en;q=0.4',
+            'Accept-Encoding': 'utf-8',
+            'Accept-Charset': 'utf-8',
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'max-age=0',
+            'Connection': 'keep-alive',
+            'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
         }
     };
 
     request(appStore, callback);
-};
+}
 
 //this.crawling({applicationId: 'appid',location: 'fr',market: 'appStore',packageName: 529141346, page: 1}, function(error, results) {
 //
