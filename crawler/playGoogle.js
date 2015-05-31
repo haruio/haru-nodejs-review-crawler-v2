@@ -12,6 +12,9 @@ var util = require('util');
 var keys = require('haru-nodejs-util').keys;
 var store = require('haru-nodejs-store');
 
+var slack = require('../lib/slackBroker');
+
+
 exports.crawling = function(option, callback) {
     async.waterfall([
         function crawling(callback) {
@@ -52,7 +55,10 @@ function _insertQuery(options, datas, callback) {
             count += results[i];
         }
 
+
         if( count === 0 ) { return callback(new Error('ER_DUP_ENTRY'), []); }
+        if( options.page === 1) { slack.emit('reviews', null, options, bulk); }
+
 
         store.get('mysql').query("insert into Reviews (commentid, imagesource, name, date, rating, title, body, applicationid, location, market, strdate) VALUES ?", [bulk], callback);
     });
