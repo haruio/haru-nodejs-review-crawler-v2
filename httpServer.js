@@ -6,8 +6,11 @@ var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
 var cors = require('cors');
+var store = require('haru-nodejs-store');
 
 var app = express();
+
+store.connect(config.store);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
