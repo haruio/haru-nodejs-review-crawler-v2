@@ -36,7 +36,7 @@ router.post('/fetch', function(req, res) {
                     var strMsg = JSON.stringify(msg);
 
                     store.get('public').hset('review:fetch', _genJobKey(msg), strMsg);
-                    //rabbitmq.publish('crawler', strMsg);
+                    rabbitmq.publish('crawler', strMsg);
                 }
             });
         }
@@ -51,9 +51,6 @@ router.post('/fetch', function(req, res) {
     },function done(error, results) {
         res.json({});
     });
-
-
-
 
 });
 
