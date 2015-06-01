@@ -69,8 +69,8 @@ function _crawling(body, callback) {
     _request(config.url, {id: body.packageName,
         reviewSortOrder: 0,
         reviewType: 0,
-        pageNum: body.page,
-        xhr: 1,
+        pageNum: body.page-1,
+        xhr: '1',
         hl: body.location}, function(error, res, html) {
 
         html = html.replace('\" ', '').replace(' \"', '').replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u003d\\/g, '=').replace(/\\\"/g, '"');
@@ -173,8 +173,8 @@ function _request(url, body, callback){
             'User-Agent': 'request',
             'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
             'Accept-Language': 'ko-KR,ko;q=0.8,en-UxS;q=0.6,en;q=0.4'
-        },
-        formData: body
+        }
+        , formData: body
     };
 
     request(google_store_options, callback);
