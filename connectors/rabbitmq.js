@@ -54,7 +54,7 @@ module.exports = (function() {
                     ch.publish(exchange, exchange,new Buffer(data), {persistent:true})
                 ]).then(function() {
                     ch.close();
-                    callback();
+                    if(callback) { callback(); }
                 });
             });
         });
