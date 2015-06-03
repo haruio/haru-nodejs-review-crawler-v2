@@ -11,6 +11,7 @@
     var config = require('./config/config.default.json');
     var _ = require('underscore');
     var async = require('async');
+    var moment = require('moment');
 
 
     store.connect(config.store);
@@ -22,7 +23,9 @@
                 next();
             });
         },function done(error, results) {
-            process.exit(1);
+            store.get('public').set('review:last:fetch', moment.format('YYYY-MM-DD hh:mm:ss'), function() {
+                process.exit(1);
+            });
         });
     });
 })();
