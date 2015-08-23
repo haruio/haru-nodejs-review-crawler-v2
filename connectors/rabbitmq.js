@@ -12,10 +12,7 @@ module.exports = (function() {
     function RabbitMQ(options) {
         this.options = options || {
             queues: [
-                //'amqp://admin:admin@localhost:5672'
-                //'amqp://admin:admin@172.16.101.62:5672'
-                //'amqp://admin:admin@172.16.101.153:5672'
-                'amqp://admin:admin@52.68.253.219:5672'
+
             ]
         };
         this.connections = [];
@@ -81,11 +78,12 @@ module.exports = (function() {
                             content = msg.content;
                         }
 
-                        doWork(error, content, function() {
+                        doWork(error, content, function(error) {
+                            if(error) { return ch.close(); }
 
+                            ch.ack(msg);
+                            return ch.close();
                         });
-                        return ch.ack(msg);
-
                     }
                 });
             });
