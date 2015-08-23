@@ -7,9 +7,8 @@ var store = require('haru-nodejs-store');
 var keys = require('haru-nodejs-util').keys;
 
 var _ = require('underscore');
-
 var RabbitMQ = require('./connectors/rabbitmq.js');
-var rabbitmq = new RabbitMQ();
+var rabbitmq = new RabbitMQ({queues: [config.mqueue.crawler.url]});
 
 store.connect(config.store);
 
